@@ -27,5 +27,16 @@ public final class DaveDirection {
     public static final int WEST  = 4;
     // Legs 5–8 exist for complex intersections; add as needed.
 
+    /** Returns a human-readable label for a direction integer. */
+    public static String name(int direction) {
+        return switch (direction) {
+            case NORTH -> "N";
+            case SOUTH -> "S";
+            case EAST  -> "E";
+            case WEST  -> "W";
+            default    -> "leg-" + direction;
+        };
+    }
+
     private DaveDirection() {}
 }

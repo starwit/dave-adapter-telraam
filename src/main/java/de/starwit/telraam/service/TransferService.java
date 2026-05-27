@@ -3,16 +3,24 @@ package de.starwit.telraam.service;
 import de.starwit.telraam.client.DaveApiClient;
 import de.starwit.telraam.client.TelraamApiClient;
 import de.starwit.telraam.dto.dave.DetectionDTO;
+import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
 import de.starwit.telraam.dto.telraam.TrafficRecord;
+import de.starwit.telraam.mapper.RoadOrientationDetector;
 import de.starwit.telraam.mapper.TrafficDirectionMapper;
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Orchestrates the full data-transfer pipeline for one 15-minute window:
@@ -31,16 +39,59 @@ public class TransferService {
 
     private static final Logger log = LoggerFactory.getLogger(TransferService.class);
 
-    private final TelraamApiClient telraamClient;
-    private final DaveApiClient daveClient;
-    private final TrafficDirectionMapper mapper;
+    @Autowired
+    private TelraamApiClient telraamClient;
 
-    public TransferService(TelraamApiClient telraamClient,
-                           DaveApiClient daveClient,
-                           TrafficDirectionMapper mapper) {
-        this.telraamClient = telraamClient;
-        this.daveClient = daveClient;
-        this.mapper = mapper;
+    @Autowired
+    private DaveApiClient daveClient;
+
+    @Autowired
+    private TrafficDirectionMapper mapper;
+
+    @Autowired
+    private RoadOrientationDetector orientationDetector;
+
+    private Map<String, RoadOrientationDetector.OrientationResult> segmentOrientations = new HashMap<>();
+
+    @PostConstruct
+    private void init() throws InterruptedException {
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        int minuteOffset = now.getMinute() % 15;
+        OffsetDateTime windowEnd = now
+                .minusMinutes(minuteOffset)
+                .withSecond(0)
+                .withNano(0);
+        var segments = telraamClient.fetchSegmentsInArea();
+        Thread.sleep(2000);  // avoid hitting API rate limits during startup
+        for (String segment : segments) {
+            // Fetch geometry and detect orientation for each segment, caching the results for later mapping
+            SegmentInstancesResponse segmentResponse = telraamClient.fetchSegmentInstances(segment);
+            log.debug(segmentResponse.toString());
+            var orientationResult = orientationDetector.detect(segmentResponse.features().get(0).geometry());
+            segmentOrientations.put(segment, orientationResult);
+            log.debug(orientationResult.toString());
+            Thread.sleep(2000);
+            // load traffic report 
+            List<TrafficRecord> result = telraamClient.fetchTraffic(segment, windowEnd.minusMinutes(30), windowEnd.minusMinutes(15));
+            log.debug("Traffic report for segment {}: {}", segment, result.toString());
+            Thread.sleep(2000);
+        }
+    }
+
+    /**
+     * Fires every 15 minutes (at :00, :15, :30, :45).
+     * Spring cron format: {@code second minute hour day month weekday}
+     */
+    @Scheduled(cron = "${telraam.scheduler.cron:0 */15 * * * *}")
+    public void runTransfer() {
+        log.info("Scheduled transfer triggered");
+        try {
+            transferLatest();
+        } catch (Exception ex) {
+            // Catch-all so the scheduler stays alive even on unexpected errors
+            log.error("Unexpected error during scheduled transfer: {}", ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -53,7 +104,7 @@ public class TransferService {
         log.info("Starting transfer run for window [{} – {}]", windowStart, windowEnd);
 
         // 1. Auto-discover segments in the bounding box
-        List<Long> segmentIds = telraamClient.findSegmentIdsInBoundingBox();
+        List<String> segmentIds = telraamClient.fetchSegmentsInArea();
         if (segmentIds.isEmpty()) {
             log.warn("No segments found in bounding box – nothing to transfer");
             return;
@@ -61,7 +112,7 @@ public class TransferService {
 
         // 2+3. Fetch and map all records across all segments
         List<DetectionDTO> batch = new ArrayList<>();
-        for (Long segmentId : segmentIds) {
+        for (String segmentId : segmentIds) {
             List<TrafficRecord> records =
                     telraamClient.fetchTraffic(segmentId, windowStart, windowEnd);
 

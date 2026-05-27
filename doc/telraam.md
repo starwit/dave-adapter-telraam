@@ -1,5 +1,5 @@
 # Docs how to access Telraam API
-
+These are some sample API calls for the Telraam API. See their [interactive spec](https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0) for more details.
 
 ## Get data for your city
 
@@ -180,6 +180,7 @@ __response__
       }
     }
   ]
+}
 ```
 5. Get traffic data
 ```bash
@@ -195,5 +196,76 @@ curl -X 'POST' \
   "time_start": "2026-05-21 11:00:00Z",
   "time_end": "2026-05-21 11:15:00Z"
 }'
+```
+__response__
+```json
+{
+  "status_code": 200,
+  "message": "ok",
+  "report": [
+    {
+      "instance_id": -1,
+      "segment_id": 9000011165,
+      "date": "2026-05-21T11:00:00.000Z",
+      "interval": "hourly",
+      "uptime": 0.9994444444,
+      "heavy": 6.0,
+      "car": 138.0,
+      "bike": 12.0,
+      "pedestrian": 50.0,
+      "night": 0.0,
+      "heavy_lft": 0.0,
+      "heavy_rgt": 6.0,
+      "car_lft": 42.0,
+      "car_rgt": 96.0,
+      "bike_lft": 2.0,
+      "bike_rgt": 10.0,
+      "pedestrian_lft": 20.0,
+      "pedestrian_rgt": 30.0,
+      "night_lft": 0.0,
+      "night_rgt": 0.0,
+      "direction": 1,
+      "car_speed_hist_0to70plus": [
+        2.1739130435,
+        15.9420289855,
+        28.2608695652,
+        31.1594202899,
+        13.768115942,
+        7.2463768116,
+        0.7246376812,
+        0.7246376812
+      ],
+      "car_speed_hist_0to120plus": [
+        0.0,
+        2.1739130435,
+        5.7971014493,
+        10.1449275362,
+        10.8695652174,
+        17.3913043478,
+        13.768115942,
+        17.3913043478,
+        10.1449275362,
+        3.6231884058,
+        3.6231884058,
+        3.6231884058,
+        0.7246376812,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.7246376812,
+        0.0
+      ],
+      "timezone": "Europe/Berlin",
+      "v85": 43.5
+    }
+  ]
+}
 ```
 

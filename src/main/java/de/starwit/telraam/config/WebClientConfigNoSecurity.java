@@ -2,6 +2,9 @@ package de.starwit.telraam.config;
 
 import de.starwit.telraam.config.AdapterProperties.DaveProperties;
 import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +26,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 @Profile({"dev","test"})
 public class WebClientConfigNoSecurity {
+
+    private static final Logger log = LoggerFactory.getLogger(WebClientConfigNoSecurity.class);
 
     @Bean("telraamWebClient")
     public WebClient telraamWebClient(TelraamProperties props) {

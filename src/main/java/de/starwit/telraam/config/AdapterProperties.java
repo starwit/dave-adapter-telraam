@@ -23,8 +23,8 @@ public class AdapterProperties {
     @Validated
     public static class TelraamProperties {
 
-        /** Base URL of the Telraam API (default: https://telraam-api.net/v1). */
-        private String apiUrl = "https://telraam-api.net/v1";
+        /** Base URL of the Telraam API (default: https://telraam-api.net). */
+        private String apiUrl = "https://telraam-api.net";
 
         /** Personal API token – set via environment variable TELRAAM_API_KEY. */
         @NotBlank(message = "telraam.api-key must not be blank")

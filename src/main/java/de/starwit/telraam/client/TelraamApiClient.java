@@ -1,26 +1,25 @@
 package de.starwit.telraam.client;
 
-import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
-import de.starwit.telraam.dto.telraam.ActiveCamerasResponse;
-import de.starwit.telraam.dto.telraam.TrafficRecord;
-import de.starwit.telraam.dto.telraam.TrafficRequest;
-import de.starwit.telraam.dto.telraam.TrafficResponse;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
+import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
+import de.starwit.telraam.dto.telraam.SegmentsAreaRequest;
+import de.starwit.telraam.dto.telraam.SegmentsAreaResponse;
+import de.starwit.telraam.dto.telraam.TrafficRecord;
+import de.starwit.telraam.dto.telraam.TrafficReportRequest;
+import de.starwit.telraam.dto.telraam.TrafficResponse;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-/**
- * Wraps all HTTP calls to the Telraam API v1.
- */
 @Service
 public class TelraamApiClient {
 
@@ -38,55 +37,6 @@ public class TelraamApiClient {
     }
 
     /**
-     * Discovers all active segment IDs within the configured bounding box by
-     * calling the traffic snapshot endpoint.
-     *
-     * @return list of unique segment IDs (may be empty, never null)
-     */
-    public List<Long> findSegmentIdsInBoundingBox() {
-        var bbox = props.getBoundingBox();
-        log.debug("Discovering segments in bbox [{},{} – {},{}]",
-                bbox.getMinLon(), bbox.getMinLat(), bbox.getMaxLon(), bbox.getMaxLat());
-
-        // The snapshot endpoint accepts a bounding box and returns GeoJSON features.
-        Map<String, Object> body = Map.of(
-                "type", "bbox",
-                "contents", Map.of(
-                        "min_lon", bbox.getMinLon(),
-                        "min_lat", bbox.getMinLat(),
-                        "max_lon", bbox.getMaxLon(),
-                        "max_lat", bbox.getMaxLat()
-                )
-        );
-
-        try {
-            ActiveCamerasResponse response = webClient.post()
-                    .uri("/cameras/active")
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(ActiveCamerasResponse.class)
-                    .block();
-
-            if (response == null || response.features() == null) {
-                log.warn("Empty response from /cameras/active");
-                return Collections.emptyList();
-            }
-
-            List<Long> ids = response.features().stream()
-                    .map(f -> f.properties().segmentId())
-                    .distinct()
-                    .toList();
-
-            log.info("Discovered {} segment(s) in bounding box", ids.size());
-            return ids;
-
-        } catch (Exception ex) {
-            log.error("Failed to discover segments from Telraam API: {}", ex.getMessage(), ex);
-            return Collections.emptyList();
-        }
-    }
-
-    /**
      * Fetches 15-minute traffic records for a single segment within [from, to).
      *
      * @param segmentId Telraam segment ID
@@ -94,17 +44,18 @@ public class TelraamApiClient {
      * @param to        window end (exclusive)
      * @return list of traffic records (may be empty on API error)
      */
-    public List<TrafficRecord> fetchTraffic(Long segmentId, OffsetDateTime from, OffsetDateTime to) {
+    public List<TrafficRecord> fetchTraffic(String segmentId, OffsetDateTime from, OffsetDateTime to) {
         String timeStart = from.format(TELRAAM_FMT);
         String timeEnd   = to.format(TELRAAM_FMT);
 
         log.debug("Fetching traffic for segment {} [{} – {}]", segmentId, timeStart, timeEnd);
 
-        TrafficRequest request = TrafficRequest.forSegment(String.valueOf(segmentId), timeStart, timeEnd);
+        TrafficReportRequest request = TrafficReportRequest.forSegment(segmentId, timeStart, timeEnd);
 
         try {
             TrafficResponse response = webClient.post()
-                    .uri("/reports/traffic")
+                    .uri("/advanced/reports/traffic")
+                    .header("X-Api-Key", props.getApiKey())
                     .bodyValue(request)
                     .retrieve()
                     .onStatus(
@@ -128,6 +79,75 @@ public class TelraamApiClient {
         } catch (Exception ex) {
             log.error("Failed to fetch traffic for segment {}: {}", segmentId, ex.getMessage(), ex);
             return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Fetches all segments within the configured bounding box using the segments/area endpoint.
+     * This endpoint returns segment geometries (road segments) within a geographic polygon.
+     *
+     * @return list of unique segment IDs (may be empty on API error)
+     */
+    public List<String> fetchSegmentsInArea() {
+        var bbox = props.getBoundingBox();
+        log.debug("Fetching segments in area [{},{} – {},{}]",
+                bbox.getMinLon(), bbox.getMinLat(), bbox.getMaxLon(), bbox.getMaxLat());
+
+        SegmentsAreaRequest request = SegmentsAreaRequest.fromBoundingBox(
+                bbox.getMinLon(), bbox.getMinLat(), bbox.getMaxLon(), bbox.getMaxLat());
+
+        try {
+            SegmentsAreaResponse response = webClient.post()
+                    .uri("/v1/segments/area")
+                    .bodyValue(request)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            clientResponse -> clientResponse.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(
+                                            new RuntimeException("Telraam API error " +
+                                                    clientResponse.statusCode() + ": " + body)))
+                    )
+                    .bodyToMono(SegmentsAreaResponse.class)
+                    .block();
+
+            if (response == null || response.features() == null) {
+                log.warn("Empty response from /segments/area");
+                return Collections.emptyList();
+            }
+
+            List<String> segmentIds = response.features().stream()
+                    .map(f -> f.properties().segmentId())
+                    .distinct()
+                    .toList();
+
+            log.info("Discovered {} segment(s) in area", segmentIds.size());
+            return segmentIds;
+
+        } catch (Exception ex) {
+            log.error("Failed to fetch segments from Telraam API: {}", ex.getMessage(), ex);
+            return Collections.emptyList();
+        }
+    }
+
+    public SegmentInstancesResponse fetchSegmentInstances(String segmentId) {
+        try {
+            return webClient.get()
+                    .uri("/v1/segments/id/{id}", segmentId)
+                    .header("X-Api-Key", props.getApiKey())
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            clientResponse -> clientResponse.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(
+                                            new RuntimeException("Telraam API error " +
+                                                    clientResponse.statusCode() + ": " + body)))
+                    )
+                    .bodyToMono(SegmentInstancesResponse.class)
+                    .block();
+        } catch (Exception ex) {
+            log.error("Failed to fetch segment instances for {}: {}", segmentId, ex.getMessage(), ex);
+            return null;
         }
     }
 }
