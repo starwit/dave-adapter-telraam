@@ -18,6 +18,7 @@ import java.util.Optional;
  * Starwit DAVe {@code DetectorController}.
  *
  * <h2>Telraam direction convention</h2>
+ * 
  * <pre>
  *  direction = 1 (True side):   lft → A→B,  rgt → B→A
  *  direction = 0 (False side):  rgt → A→B,  lft → B→A
@@ -28,8 +29,10 @@ import java.util.Optional;
  * {@code directionBtoA}) that correspond to DAVe's compass-leg numbering
  * (1=N, 2=S, 3=E, 4=W). These come from {@link SegmentMappingProperties}.
  *
- * <p>A single Telraam record produces <em>two</em> {@link DetectionDTO}s so
- * that DAVe can store inbound and outbound flows independently.</p>
+ * <p>
+ * A single Telraam record produces <em>two</em> {@link DetectionDTO}s so
+ * that DAVe can store inbound and outbound flows independently.
+ * </p>
  */
 @Component
 public class TrafficDirectionMapper {
@@ -45,15 +48,16 @@ public class TrafficDirectionMapper {
     /**
      * Maps one Telraam record to a list of {@link DetectionDTO}s ready for DAVe.
      *
-     * <p>Returns an empty list if no segment mapping is configured for the
-     * record's segment_id (with a warning log).</p>
+     * <p>
+     * Returns an empty list if no segment mapping is configured for the
+     * record's segment_id (with a warning log).
+     * </p>
      *
      * @param record raw Telraam traffic record
      * @return 0, 1 or 2 {@link DetectionDTO}s (one per non-zero direction)
      */
     public List<DetectionDTO> map(TrafficRecord record) {
-        Optional<SegmentMapping> mappingOpt =
-                mappingProperties.findBySegmentId(record.segmentId());
+        Optional<SegmentMapping> mappingOpt = mappingProperties.findBySegmentId(record.segmentId());
 
         if (mappingOpt.isEmpty()) {
             log.warn("No DAVe mapping configured for Telraam segment {}  – skipping record",
@@ -65,19 +69,19 @@ public class TrafficDirectionMapper {
         boolean trueDirection = record.direction() == null || record.direction() == 1;
 
         // Resolve lft/rgt counts into A→B and B→A buckets
-        int carAtoB    = round(trueDirection ? record.carLft()         : record.carRgt());
-        int carBtoA    = round(trueDirection ? record.carRgt()         : record.carLft());
-        int bikeAtoB   = round(trueDirection ? record.bikeLft()        : record.bikeRgt());
-        int bikeBtoA   = round(trueDirection ? record.bikeRgt()        : record.bikeLft());
-        int motoAtoB   = round(trueDirection ? record.motorbikeLft()   : record.motorbikeRgt());
-        int motoBtoA   = round(trueDirection ? record.motorbikeRgt()   : record.motorbikeLft());
-        int pedAtoB    = round(trueDirection ? record.pedestrianLft()  : record.pedestrianRgt());
-        int pedBtoA    = round(trueDirection ? record.pedestrianRgt()  : record.pedestrianLft());
-        int heavyAtoB  = round(trueDirection ? record.heavyLft()       : record.heavyRgt());
-        int heavyBtoA  = round(trueDirection ? record.heavyRgt()       : record.heavyLft());
+        int carAtoB = round(trueDirection ? record.carLft() : record.carRgt());
+        int carBtoA = round(trueDirection ? record.carRgt() : record.carLft());
+        int bikeAtoB = round(trueDirection ? record.bikeLft() : record.bikeRgt());
+        int bikeBtoA = round(trueDirection ? record.bikeRgt() : record.bikeLft());
+        int motoAtoB = round(trueDirection ? record.motorbikeLft() : record.motorbikeRgt());
+        int motoBtoA = round(trueDirection ? record.motorbikeRgt() : record.motorbikeLft());
+        int pedAtoB = round(trueDirection ? record.pedestrianLft() : record.pedestrianRgt());
+        int pedBtoA = round(trueDirection ? record.pedestrianRgt() : record.pedestrianLft());
+        int heavyAtoB = round(trueDirection ? record.heavyLft() : record.heavyRgt());
+        int heavyBtoA = round(trueDirection ? record.heavyRgt() : record.heavyLft());
 
         var start = record.date().toInstant();
-        var end   = start.plusSeconds(15 * 60);
+        var end = start.plusSeconds(15 * 60);
 
         List<DetectionDTO> results = new ArrayList<>(2);
 
@@ -89,7 +93,7 @@ public class TrafficDirectionMapper {
         aToB.setVon(mapping.getDirectionAtoB());
         aToB.setNach(mapping.getDirectionBtoA());
         aToB.setPkw(carAtoB);
-        aToB.setLkw(heavyAtoB);          // Telraam "heavy" → DAVe Lkw
+        aToB.setLkw(heavyAtoB); // Telraam "heavy" → DAVe Lkw
         aToB.setKraftraeder(motoAtoB);
         aToB.setFahrradfahrer(bikeAtoB);
         aToB.setFussgaenger(pedAtoB);

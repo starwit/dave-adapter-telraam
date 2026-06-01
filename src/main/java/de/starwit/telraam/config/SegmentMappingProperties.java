@@ -13,7 +13,10 @@ import java.util.UUID;
  * two DAVe direction integers that represent A→B and B→A traffic flow on that
  * segment.
  *
- * <p>Example configuration in {@code application.yml}:</p>
+ * <p>
+ * Example configuration in {@code application.yml}:
+ * </p>
+ * 
  * <pre>
  * telraam:
  *   segment-mapping:
@@ -33,7 +36,10 @@ public class SegmentMappingProperties {
 
     private List<SegmentMapping> segmentMapping = new ArrayList<>();
 
-    public List<SegmentMapping> getSegmentMapping() { return segmentMapping; }
+    public List<SegmentMapping> getSegmentMapping() {
+        return segmentMapping;
+    }
+
     public void setSegmentMapping(List<SegmentMapping> segmentMapping) {
         this.segmentMapping = segmentMapping;
     }
@@ -44,7 +50,7 @@ public class SegmentMappingProperties {
      * @param segmentId Telraam segment_id (long)
      * @return the mapping, or empty if not configured
      */
-    public Optional<SegmentMapping> findBySegmentId(Long segmentId) {
+    public Optional<SegmentMapping> findBySegmentId(String segmentId) {
         return segmentMapping.stream()
                 .filter(m -> m.getSegmentId() != null && m.getSegmentId().equals(segmentId))
                 .findFirst();
@@ -53,7 +59,7 @@ public class SegmentMappingProperties {
     public static class SegmentMapping {
 
         /** Telraam numeric segment_id. */
-        private Long segmentId;
+        private String segmentId;
 
         /** The DAVe Zählung UUID this segment's data should be stored under. */
         private UUID zaehlungId;
@@ -69,16 +75,36 @@ public class SegmentMappingProperties {
          */
         private Integer directionBtoA;
 
-        public Long getSegmentId() { return segmentId; }
-        public void setSegmentId(Long segmentId) { this.segmentId = segmentId; }
+        public String getSegmentId() {
+            return segmentId;
+        }
 
-        public UUID getZaehlungId() { return zaehlungId; }
-        public void setZaehlungId(UUID zaehlungId) { this.zaehlungId = zaehlungId; }
+        public void setSegmentId(String segmentId) {
+            this.segmentId = segmentId;
+        }
 
-        public Integer getDirectionAtoB() { return directionAtoB; }
-        public void setDirectionAtoB(Integer directionAtoB) { this.directionAtoB = directionAtoB; }
+        public UUID getZaehlungId() {
+            return zaehlungId;
+        }
 
-        public Integer getDirectionBtoA() { return directionBtoA; }
-        public void setDirectionBtoA(Integer directionBtoA) { this.directionBtoA = directionBtoA; }
+        public void setZaehlungId(UUID zaehlungId) {
+            this.zaehlungId = zaehlungId;
+        }
+
+        public Integer getDirectionAtoB() {
+            return directionAtoB;
+        }
+
+        public void setDirectionAtoB(Integer directionAtoB) {
+            this.directionAtoB = directionAtoB;
+        }
+
+        public Integer getDirectionBtoA() {
+            return directionBtoA;
+        }
+
+        public void setDirectionBtoA(Integer directionBtoA) {
+            this.directionBtoA = directionBtoA;
+        }
     }
 }

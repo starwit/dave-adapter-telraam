@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrafficDirectionMapperTest {
 
-    private static final long   SEGMENT_ID   = 9000001463L;
+    private static final String   SEGMENT_ID   = "9000001463";
     private static final UUID   ZAEHLUNG_ID  = UUID.randomUUID();
     private static final int    DIR_A_TO_B   = 1; // North
     private static final int    DIR_B_TO_A   = 2; // South
@@ -91,7 +91,7 @@ class TrafficDirectionMapperTest {
         TrafficRecord rec = record(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         // change segment ID to one that isn't configured
         TrafficRecord unknown = new TrafficRecord(
-                rec.date(), 9999999L, rec.direction(),
+                rec.date(), "9999999", rec.direction(),
                 rec.pedestrian(), rec.pedestrianLft(), rec.pedestrianRgt(),
                 rec.bike(), rec.bikeLft(), rec.bikeRgt(),
                 rec.motorbike(), rec.motorbikeLft(), rec.motorbikeRgt(),

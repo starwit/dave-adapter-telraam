@@ -187,7 +187,7 @@ __response__
 curl -X 'POST' \
   'https://telraam-api.net/v1/reports/traffic' \
   -H 'accept: application/json' \
-  -H 'X-Api-Key: aBCKIhzB9ga4EY2Zy3MzS3x1mSGvQmLD4djU4eSd' \
+  -H "X-Api-Key: ${APITOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{
   "level": "segments",

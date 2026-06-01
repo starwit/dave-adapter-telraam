@@ -20,7 +20,7 @@ public record TrafficRecord(
         @JsonProperty("date") OffsetDateTime date,
 
         /** Segment or instance identifier. */
-        @JsonProperty("segment_id") Long segmentId,
+        @JsonProperty("segment_id") String segmentId,
 
         /**
          * Camera orientation flag:

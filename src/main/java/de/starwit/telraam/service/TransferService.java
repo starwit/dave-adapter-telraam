@@ -2,6 +2,7 @@ package de.starwit.telraam.service;
 
 import de.starwit.telraam.client.DaveApiClient;
 import de.starwit.telraam.client.TelraamApiClient;
+import de.starwit.telraam.config.SegmentMappingProperties;
 import de.starwit.telraam.dto.dave.DetectionDTO;
 import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
 import de.starwit.telraam.dto.telraam.TrafficRecord;
@@ -26,12 +27,13 @@ import java.util.Map;
  * Orchestrates the full data-transfer pipeline for one 15-minute window:
  *
  * <ol>
- *   <li>Discover active segment IDs inside the configured bounding box.</li>
- *   <li>For each segment: fetch 15-minute traffic data from the Telraam API.</li>
- *   <li>Map each record to two {@link DetectionDTO}s (A→B and B→A) using the
- *       exact field format expected by the Starwit DAVe {@code DetectorController}.</li>
- *   <li>Send the entire window's detections in one batch call to DAVe's
- *       {@code POST /detector/save-latest-detections} endpoint.</li>
+ * <li>Discover active segment IDs inside the configured bounding box.</li>
+ * <li>For each segment: fetch 15-minute traffic data from the Telraam API.</li>
+ * <li>Map each record to two {@link DetectionDTO}s (A→B and B→A) using the
+ * exact field format expected by the Starwit DAVe
+ * {@code DetectorController}.</li>
+ * <li>Send the entire window's detections in one batch call to DAVe's
+ * {@code POST /detector/save-latest-detections} endpoint.</li>
  * </ol>
  */
 @Service
@@ -46,6 +48,9 @@ public class TransferService {
     private DaveApiClient daveClient;
 
     @Autowired
+    private SegmentMappingProperties segmentMappingProperties;
+
+    @Autowired
     private TrafficDirectionMapper mapper;
 
     @Autowired
@@ -55,7 +60,11 @@ public class TransferService {
 
     @PostConstruct
     private void init() throws InterruptedException {
+        log.info("Running initial data collection to prime caches and detect orientations");
+        runDataCollection();
+    }
 
+    private void runDataCollection() throws InterruptedException {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         int minuteOffset = now.getMinute() % 15;
         OffsetDateTime windowEnd = now
@@ -63,19 +72,32 @@ public class TransferService {
                 .withSecond(0)
                 .withNano(0);
         var segments = telraamClient.fetchSegmentsInArea();
-        Thread.sleep(2000);  // avoid hitting API rate limits during startup
+        Thread.sleep(2000); // avoid hitting API rate limits during startup
         for (String segment : segments) {
-            // Fetch geometry and detect orientation for each segment, caching the results for later mapping
+            //if segment is not in config, skip
+            if (segmentMappingProperties.findBySegmentId(segment).isEmpty()) {
+                log.warn("Segment {} not found in configuration – skipping, add new mapping!", segment);
+                continue;
+            }
+            // Fetch geometry and detect orientation for each segment, caching the results
             SegmentInstancesResponse segmentResponse = telraamClient.fetchSegmentInstances(segment);
             log.debug(segmentResponse.toString());
             var orientationResult = orientationDetector.detect(segmentResponse.features().get(0).geometry());
             segmentOrientations.put(segment, orientationResult);
             log.debug(orientationResult.toString());
+            var mapping = segmentMappingProperties.findBySegmentId(segment);
+            mapping.get().setDirectionAtoB(orientationResult.directionAtoB());
+            mapping.get().setDirectionBtoA(orientationResult.directionBtoA());
             Thread.sleep(2000);
-            // load traffic report 
-            List<TrafficRecord> result = telraamClient.fetchTraffic(segment, windowEnd.minusMinutes(30), windowEnd.minusMinutes(15));
+            // load traffic report
+            List<TrafficRecord> result = telraamClient.fetchTraffic(segment, windowEnd.minusMinutes(30),
+                    windowEnd.minusMinutes(15));
             log.debug("Traffic report for segment {}: {}", segment, result.toString());
             Thread.sleep(2000);
+            
+            DetectionDTO daveDTO = mapper.map(result.get(0)).get(0);
+
+            daveClient.sendSingle(daveDTO);
         }
     }
 
@@ -113,8 +135,7 @@ public class TransferService {
         // 2+3. Fetch and map all records across all segments
         List<DetectionDTO> batch = new ArrayList<>();
         for (String segmentId : segmentIds) {
-            List<TrafficRecord> records =
-                    telraamClient.fetchTraffic(segmentId, windowStart, windowEnd);
+            List<TrafficRecord> records = telraamClient.fetchTraffic(segmentId, windowStart, windowEnd);
 
             for (TrafficRecord record : records) {
                 List<DetectionDTO> detections = mapper.map(record);
