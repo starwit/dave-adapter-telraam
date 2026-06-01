@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.http.HttpStatus;
 
 import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
 import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
@@ -60,10 +62,7 @@ public class TelraamApiClient {
                     .retrieve()
                     .onStatus(
                             status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .flatMap(body -> Mono.error(
-                                            new RuntimeException("Telraam API error " +
-                                                    clientResponse.statusCode() + ": " + body)))
+                            clientResponse -> clientResponse.createException().flatMap(Mono::error)
                     )
                     .bodyToMono(TrafficResponse.class)
                     .block();
@@ -77,8 +76,12 @@ public class TelraamApiClient {
             return response.report();
 
         } catch (Exception ex) {
-            log.error("Failed to fetch traffic for segment {}: {}", segmentId, ex.getMessage(), ex);
-            return Collections.emptyList();
+                if (ex instanceof WebClientResponseException wcre && wcre.getStatusCode() == HttpStatus.FORBIDDEN) {
+                        log.warn("Forbidden: Telraam API returned 403 for segment {}", segmentId);
+                } else {
+                        log.error("Failed to fetch traffic for segment {}: {}", segmentId, ex.getMessage(), ex);
+                }
+                return Collections.emptyList();
         }
     }
 
@@ -122,6 +125,7 @@ public class TelraamApiClient {
                     .toList();
 
             log.info("Discovered {} segment(s) in area", segmentIds.size());
+            log.debug("Segment IDs: {}", segmentIds);
             return segmentIds;
 
         } catch (Exception ex) {

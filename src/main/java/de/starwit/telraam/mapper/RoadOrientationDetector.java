@@ -96,15 +96,32 @@ public class RoadOrientationDetector {
             return new OrientationResult(DaveDirection.NORTH, DaveDirection.SOUTH);
         }
 
-        if (absLat >= absLon) {
+        // Determine if the road is more diagonal (∈ [22.5°, 67.5°]) or cardinal
+        // Using ratio threshold: ~0.414 ≈ tan(22.5°), ~2.414 ≈ tan(67.5°)
+        double ratio = absLat > 0 ? absLon / absLat : Double.POSITIVE_INFINITY;
+        boolean isDiagonal = ratio > 0.414 && ratio < 2.414;
+
+        if (isDiagonal) {
+            // Diagonal direction: northeast, southeast, southwest, northwest
+            boolean headingNorth = deltaLatM >= 0;
+            boolean headingEast  = deltaLonM >= 0;
+
+            if (headingNorth && headingEast) {
+                return new OrientationResult(DaveDirection.NORTHEAST, DaveDirection.SOUTHWEST);
+            } else if (headingNorth && !headingEast) {
+                return new OrientationResult(DaveDirection.NORTHWEST, DaveDirection.SOUTHEAST);
+            } else if (!headingNorth && headingEast) {
+                return new OrientationResult(DaveDirection.SOUTHEAST, DaveDirection.NORTHWEST);
+            } else {
+                return new OrientationResult(DaveDirection.SOUTHWEST, DaveDirection.NORTHEAST);
+            }
+        } else if (absLat >= absLon) {
             // Dominant axis: N–S
-            // If deltaLatM > 0 the road runs northward from first to last → A→B = NORTH
             return deltaLatM >= 0
                     ? new OrientationResult(DaveDirection.NORTH, DaveDirection.SOUTH)
                     : new OrientationResult(DaveDirection.SOUTH, DaveDirection.NORTH);
         } else {
             // Dominant axis: E–W
-            // If deltaLonM > 0 the road runs eastward from first to last → A→B = EAST
             return deltaLonM >= 0
                     ? new OrientationResult(DaveDirection.EAST, DaveDirection.WEST)
                     : new OrientationResult(DaveDirection.WEST, DaveDirection.EAST);

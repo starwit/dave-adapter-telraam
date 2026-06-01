@@ -1,12 +1,12 @@
 package de.starwit.telraam.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * Maps each Telraam segment_id to the corresponding DAVe Zählung UUID and the
@@ -105,6 +105,12 @@ public class SegmentMappingProperties {
 
         public void setDirectionBtoA(Integer directionBtoA) {
             this.directionBtoA = directionBtoA;
+        }
+
+        @Override
+        public String toString() {
+            return "SegmentMapping [segmentId=" + segmentId + ", zaehlungId=" + zaehlungId + ", directionAtoB="
+                    + directionAtoB + ", directionBtoA=" + directionBtoA + "]";
         }
     }
 }
