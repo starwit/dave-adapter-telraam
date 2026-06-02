@@ -22,7 +22,7 @@ In [DAVe](https://opensource.muenchen.de/de/software/dave.html) directions are d
 All collected data needs to be brought into this format.
 
 ### Telraam Sensor Doc
-[API Definition](https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0)
+Data for Telraam sensors can be accessed via a centralized API. See [API Definition](https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0)for more details. There are also some [examples](doc/telraam.md) how to query this API.
 
 ## Technical Architecture
 Application is implemented using Spring Boot. Core is a scheduled task, that reads data from Telraam REST API and send converted date to DAVe. 
