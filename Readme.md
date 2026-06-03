@@ -29,7 +29,36 @@ Application is implemented using Spring Boot. Core is a scheduled task, that rea
 
 ### Configuration
 Both endpoints need configuration data including authentication. DAVe uses openID connect to authenticate API access whereas Telraam needs an API key.
-For all config items see 
+
+Core config concept is (for the time being), that adapter collects all Telraam sensors in a provided geo-fence. For every sensor found data is queried if there is a mapping to a DAVe counting location. This mapping looks like so:
+
+```properties
+telraam.segment-mapping[0].segment-id=9000011165
+telraam.segment-mapping[0].zaehlung-id=f6e155f4-89e9-4046-830a-ead29fa6d7a5
+```
+
+For all config items see shipped [application.properties](src/main/resources/application.properties).
+
+# Developer Doc
+Adapter is developed using Java & Spring Boot. In order to run adapter, you need
+* a Telraam API key for advanced API
+* a running DAVe instance 
+* create a counting location, for at least one Telraam sensor
+* openID credentials, if your DAVe instance is protected by Keycloak
+* easiest way to provide necessary config, is to create a copy of [application.properties](src/main/resources/application.properties) to root folder of adapter repo
+
+
+```bash
+# build adapter
+mvn package
+
+# run adapter, replace with latest version
+java -jar target/dave-adapter-telraam-0.0.1-SNAPSHOT.jar
+```
+
+## Docker & Helm
+TODO
+
 
 # License & Contribution
 This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
