@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: starwitorg/dave-adapter
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ${project.version}
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          daveclient:
+            client_id: dave_api
+            client_secret: supersecret
+        provider:
+          daveprovider:
+            token_uri: https://uri
+
+
+app:
+  telraam:
+    api_url: https://telraam-api.net
+    api_key: yoursecretapikey
+    bounding_box:
+      min_lon: ${TELRAAM_BBOX_MIN_LON:10.670709}
+      min_lat: ${TELRAAM_BBOX_MIN_LAT:52.365772}
+      max_lon: ${TELRAAM_BBOX_MAX_LON:10.884599}
+      max_lat: ${TELRAAM_BBOX_MAX_LAT:52.476114}
+
+    # for the time being, this is a static mapping of segments to counting spots in DAVe
+    segment_mapping:
+      - segment_id: 9000011165
+        zaehlung_id: f6e155f4-89e9-4046-830a-ead29fa6d7a5
+      - segment_id: 9000011164
+        zaehlung_id: f6e155f4-89e9-4046-830a-ead29fa6d7a5
+
+  scheduler:
+    cron: 0 */15 * * * *
+
+  dave_url: http://localhost:8080/detector/save-latest-detections
+  auth: 
+    enabled: true
+
+service:
+  port: 8080
+
+# extraEnv: |
+#   - name: JAVA_TOOL_OPTIONS
+#     value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000
+#   - name: LOGGING_LEVEL_ROOT
+#     value: DEBUG
+
+autoscaling:
+  enabled: false

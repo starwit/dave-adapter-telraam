@@ -1,0 +1,9 @@
+apiVersion: v2
+name: dave-adapter-chart
+description: A Helm chart to deploy dave-adapter to Kubernetes
+
+type: application
+
+version: ${project.version}
+
+appVersion: ${project.version}

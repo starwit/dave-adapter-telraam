@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dave-adapter-telraam.fullname" . }}
+  labels:
+    {{- include "dave-adapter-telraam.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "dave-adapter-telraam.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dave-adapter-telraam.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: APP_TELRAAM_API_KEY
+              value: {{ .Values.app.telraam.api_key }}
+            - name: APP_TELRAAM_API_URL
+              value: {{ .Values.app.telraam.api_url }}
+            {{- with .Values.app.telraam.bounding_box }}
+            - name: APP_TELRAAM_BOUNDING_BOX_MIN_LON
+              value: {{ .min_lon }}
+            - name: APP_TELRAAM_BOUNDING_BOX_MIN_LAT
+              value: {{ .min_lat }}
+            - name: APP_TELRAAM_BOUNDING_BOX_MAX_LON
+              value: {{ .max_lon }}
+            - name: APP_TELRAAM_BOUNDING_BOX_MAX_LAT
+              value: {{ .max_lat }}
+            {{- end }}
+            {{- with .Values.app.telraam.segment_mapping }}
+            - name: APP_TELRAAM_SEGMENT_MAPPING
+              value: {{ toJson . | quote }}
+            {{- range $i, $entry := . }}
+            - name: APP_TELRAAM_SEGMENT_MAPPING_{{$i}}_SEGMENT_ID
+              value: {{ index $entry "segment_id" | quote }}
+            - name: APP_TELRAAM_SEGMENT_MAPPING_{{$i}}_ZAEHLUNG_ID
+              value: {{ index $entry "zaehlung_id" | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.app.auth.enabled }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVECLIENT_CLIENT_ID
+              value: {{ .Values.spring.security.oauth2.client.registration.daveclient.client_id }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVECLIENT_CLIENT_SECRET
+              value: {{ .Values.spring.security.oauth2.client.registration.daveclient.client_secret }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVEPROVIDER_TOKEN_URI
+              value: {{ .Values.spring.security.oauth2.client.provider.daveprovider.token_uri }}
+            {{- end }}
+            - name: APP_DAVE_URL
+              value: {{ .Values.app.dave_url }}
+            {{- with .Values.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.context_path }}/monitoring/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.context_path }}/monitoring/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
