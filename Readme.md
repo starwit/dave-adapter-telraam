@@ -22,14 +22,12 @@ In [DAVe](https://opensource.muenchen.de/de/software/dave.html) directions are d
 All collected data needs to be brought into this format.
 
 ### Telraam Sensor Doc
-Data for Telraam sensors can be accessed via a centralized API. See [API Definition](https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0)for more details. There are also some [examples](doc/telraam.md) how to query this API.
+Data for Telraam sensors can be accessed via a centralized API. See [API Definition](https://app.swaggerhub.com/apis-docs/telraam/Telraam-API/1.2.0) for more details. There are also some [examples](doc/telraam.md) how to query this API.
 
 ## Technical Architecture
 Application is implemented using Spring Boot. Core is a scheduled task, that reads data from Telraam REST API and send converted date to DAVe. 
 
 ### Configuration
-Both endpoints need configuration data including authentication. DAVe uses openID connect to authenticate API access whereas Telraam needs an API key.
-
 Core config concept is (for the time being), that adapter collects all Telraam sensors in a provided geo-fence. For every sensor found data is queried if there is a mapping to a DAVe counting location. This mapping looks like so:
 
 ```properties
@@ -38,6 +36,24 @@ telraam.segment-mapping[0].zaehlung-id=f6e155f4-89e9-4046-830a-ead29fa6d7a5
 ```
 
 For all config items see shipped [application.properties](src/main/resources/application.properties).
+
+### Authentication 
+Both endpoints need configuration data including authentication. DAVe uses openID connect to authenticate API access whereas Telraam needs an API key.
+
+Following config shows, how to provide necessary config items.
+
+```properties
+# DAVe Authentication
+spring.security.oauth2.client.registration.dave.client-id=client_id
+spring.security.oauth2.client.registration.dave.client-secret=secret
+spring.security.oauth2.client.registration.dave.authorization-grant-type=client_credentials
+spring.security.oauth2.client.registration.dave.scope=openid
+spring.security.oauth2.client.provider.dave.token-uri=https://hostname.de/auth/realms/dave/protocol/openid-connect/token
+
+# Telraam Authentication
+telraam.api-url=https://telraam-api.net
+telraam.api-key=sExGZJSxQK3mEBv8UTNhv3keK2ZOZpEg7GmIq2PV
+```
 
 # Developer Doc
 Adapter is developed using Java & Spring Boot. In order to run adapter, you need
