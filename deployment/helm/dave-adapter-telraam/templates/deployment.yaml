@@ -33,6 +33,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: auth
             - name: TELRAAM_API_KEY
               value: {{ .Values.app.telraam.api_key | quote }}
             - name: TELRAAM_API_URL
@@ -60,7 +62,7 @@ spec:
               value: {{ .Values.spring.security.oauth2.client.registration.dave.client_id | quote }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_SECRET
               value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret | quote }}
-            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE.TOKEN_URI
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE_TOKEN_URI
               value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri | quote }}
             {{- end }}
             - name: DAVE_API_URL
