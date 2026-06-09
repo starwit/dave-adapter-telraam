@@ -52,7 +52,7 @@ spring.security.oauth2.client.provider.dave.token-uri=https://hostname.de/auth/r
 
 # Telraam Authentication
 telraam.api-url=https://telraam-api.net
-telraam.api-key=sExGZJSxQK3mEBv8UTNhv3keK2ZOZpEg7GmIq2PV
+telraam.api-key=apikey
 ```
 
 # Developer Doc
