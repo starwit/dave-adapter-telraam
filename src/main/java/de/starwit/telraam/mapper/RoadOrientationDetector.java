@@ -37,7 +37,7 @@ import de.starwit.telraam.dto.telraam.SegmentInstancesResponse.SegmentGeometry;
  * Diagonal roads (e.g. 45°) are snapped to the nearest cardinal axis.
  * If the segment is essentially a single point (start ≈ end), the method
  * falls back to N–S.  Curved roads are represented by their chord vector.
- */
+ */ // --> ist dieser Text notwendig?
 @Component
 public class RoadOrientationDetector {
 

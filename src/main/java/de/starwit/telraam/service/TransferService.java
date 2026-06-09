@@ -1,16 +1,10 @@
 package de.starwit.telraam.service;
 
-import de.starwit.telraam.client.DaveApiClient;
-import de.starwit.telraam.client.TelraamApiClient;
-import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
-import de.starwit.telraam.config.SegmentMappingProperties;
-import de.starwit.telraam.config.SegmentMappingProperties.SegmentMapping;
-import de.starwit.telraam.dto.dave.DetectionDTO;
-import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
-import de.starwit.telraam.dto.telraam.TrafficRecord;
-import de.starwit.telraam.mapper.RoadOrientationDetector;
-import de.starwit.telraam.mapper.TrafficDirectionMapper;
-import jakarta.annotation.PostConstruct;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +12,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import de.starwit.telraam.client.DaveApiClient;
+import de.starwit.telraam.client.TelraamApiClient;
+import de.starwit.telraam.config.AdapterProperties.TelraamProperties;
+import de.starwit.telraam.config.SegmentMappingProperties;
+import de.starwit.telraam.dto.dave.DetectionDTO;
+import de.starwit.telraam.dto.telraam.SegmentInstancesResponse;
+import de.starwit.telraam.dto.telraam.TrafficRecord;
+import de.starwit.telraam.mapper.RoadOrientationDetector;
+import de.starwit.telraam.mapper.TrafficDirectionMapper;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Orchestrates the full data-transfer pipeline for one 15-minute window:
@@ -95,7 +94,7 @@ public class TransferService {
                 .withSecond(0)
                 .withNano(0);
         var segments = telraamClient.fetchSegmentsInArea();
-        Thread.sleep(2000); // avoid hitting API rate limits during startup
+        Thread.sleep(2000); // avoid hitting API rate limits during startup - correct?
         for (String segment : segments) {
             //if segment is not in config, skip
             if (segmentMappingProperties.findBySegmentId(segment).isEmpty()) {
@@ -112,7 +111,7 @@ public class TransferService {
             var mapping = segmentMappingProperties.findBySegmentId(segment);
             mapping.get().setDirectionAtoB(orientationResult.directionAtoB());
             mapping.get().setDirectionBtoA(orientationResult.directionBtoA());
-            Thread.sleep(2000);
+            Thread.sleep(2000); //looks like incorrect???
             
             List<TrafficRecord> result = telraamClient.fetchTraffic(segment, windowEnd.minusMinutes(30),
                     windowEnd.minusMinutes(15));
@@ -120,7 +119,7 @@ public class TransferService {
                 continue;
             }
             log.debug("Traffic report for segment {}: {}", segment, result.toString());
-            Thread.sleep(2000);
+            Thread.sleep(2000); //looks like incorrect???
             daveClient.sendBatch(mapper.map(result.get(0)));
         }
     }
