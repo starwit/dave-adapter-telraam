@@ -140,7 +140,7 @@ jobs:
         push: true
         sbom: true
         provenance: mode=max
-        tags: ${{ env.DOCKERHUB_ORG }}/${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}
+        tags: ${{ env.DOCKERHUB_ORG }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
 
   publish_helm:
     name: "Publish helm chart"
