@@ -26,7 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * </ul>
  */
 @Configuration
-@Profile("default")
+@Profile("auth")
 public class WebClientConfig {
 
     @Bean("telraamWebClient")

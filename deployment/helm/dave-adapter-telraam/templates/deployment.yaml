@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dave-adapter-telraam.fullname" . }}
+  labels:
+    {{- include "dave-adapter-telraam.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "dave-adapter-telraam.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dave-adapter-telraam.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TELRAAM_API_KEY
+              value: {{ .Values.app.telraam.api_key | quote }}
+            - name: TELRAAM_API_URL
+              value: {{ .Values.app.telraam.api_url | quote }}
+            {{- with .Values.app.telraam.bounding_box }}
+            - name: TELRAAM_BBOX_MIN_LON
+              value: {{ .min_lon | quote }}
+            - name: TELRAAM_BBOX_MIN_LAT
+              value: {{ .min_lat | quote }}
+            - name: TELRAAM_BBOX_MAX_LON
+              value: {{ .max_lon | quote }}
+            - name: TELRAAM_BBOX_MAX_LAT
+              value: {{ .max_lat | quote }}
+            {{- end }}
+            {{- with .Values.app.telraam.segment_mapping }}
+            {{- range $i, $entry := . }}
+            - name: TELRAAM_SEGMENT_MAPPING_{{ $i }}_SEGMENT_ID
+              value: {{ $entry.segment_id | quote }}
+            - name: TELRAAM_SEGMENT_MAPPING_{{ $i }}_ZAEHLUNG_ID
+              value: {{ $entry.zaehlung_id | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.app.auth.enabled }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_ID
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_id | quote }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_SECRET
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret | quote }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE.TOKEN_URI
+              value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri | quote }}
+            {{- end }}
+            - name: DAVE_API_URL
+              value: {{ .Values.app.dave_url | quote }}
+            {{- with .Values.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.context_path }}/monitoring/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.context_path }}/monitoring/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
