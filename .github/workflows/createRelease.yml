@@ -193,7 +193,7 @@ jobs:
 
     - name: template helm chart with Maven
       run: |
-        mvn validate -pl
+        mvn validate
 
     - name: login to Helm registry
       run: helm registry login registry-1.docker.io -u starwit -p ${{ secrets.DOCKERHUB_TOKEN }}
