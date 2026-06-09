@@ -131,6 +131,26 @@ jobs:
     - name: get helm
       uses: azure/setup-helm@v4
 
+    - name: Set up JDK 25
+      uses: actions/setup-java@v5
+      with:
+        distribution: "temurin"
+        java-version: 25
+
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v5
+      with:
+        maven-version: 3.9.2
+
+    - name: checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ env.RELEASE_VERSION }}
+
+    - name: template helm chart with Maven
+      run: |
+        mvn validate -pl application
+
     - name: login to Helm registry
       run: helm registry login registry-1.docker.io -u starwit -p ${{ secrets.DOCKERHUB_TOKEN }}
 
