@@ -4,7 +4,7 @@
 
     <groupId>de.starwit</groupId>
     <artifactId>dave-adapter-telraam</artifactId>
-    <version>0.0.10-SNAPSHOT</version>
+    <version>0.0.10</version>
 
     <name>dave-adapter-telraam</name>
     <description>Transfers data from Telraam sensors to DAVe every 15 minutes</description>
@@ -19,7 +19,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/starwit/dave-adapter-telraam.git</connection>
-        <tag>HEAD</tag>
+        <tag>0.0.10</tag>
     </scm>
 
     <properties>
