@@ -160,6 +160,23 @@ jobs:
     runs-on: [self-hosted, linux, X64]
     
     steps:
+    - name: checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+
+    - name: Get tag name
+      run: |
+        echo "****************** getting last tag ************************"
+        echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
+        echo "$( git describe --abbrev=0 )"
+        echo ${{ env.TAG }}
+        echo "****************** getting last tag ************************"
+
+    - name: Checkout tag
+      run: |
+        git checkout ${{ env.TAG }}
+
     - name: get helm
       uses: azure/setup-helm@v4
 
@@ -174,14 +191,9 @@ jobs:
       with:
         maven-version: 3.9.2
 
-    - name: checkout
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ env.RELEASE_VERSION }}
-
     - name: template helm chart with Maven
       run: |
-        mvn validate -pl application
+        mvn validate -pl
 
     - name: login to Helm registry
       run: helm registry login registry-1.docker.io -u starwit -p ${{ secrets.DOCKERHUB_TOKEN }}
