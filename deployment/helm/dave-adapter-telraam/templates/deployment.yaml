@@ -64,6 +64,10 @@ spec:
               value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret | quote }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE_TOKEN_URI
               value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri | quote }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_AUTHORIZATION_GRANT_TYPE
+              value: client_credentials
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_SCOPE
+              value: openid
             {{- end }}
             - name: DAVE_API_URL
               value: {{ .Values.app.dave_url | quote }}
