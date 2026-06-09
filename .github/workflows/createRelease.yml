@@ -103,8 +103,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4
-      with:
-        ref: ${{ env.RELEASE_VERSION }}
+
+    - name: Get tag name
+      run: |
+        echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
 
     - name: Set up JDK 25
       uses: actions/setup-java@v5
