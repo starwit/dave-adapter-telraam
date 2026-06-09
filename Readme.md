@@ -71,6 +71,7 @@ mvn package
 # run adapter, replace with latest version
 java -jar target/dave-adapter-telraam-0.0.1-SNAPSHOT.jar
 ```
+-- error: Parameter 0 of constructor in de.starwit.telraam.client.DaveApiClient required a bean of type 'org.springframework.web.reactive.function.client.WebClient' that could not be found.
 
 ## Docker & Helm
 TODO
