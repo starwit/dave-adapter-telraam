@@ -26,10 +26,10 @@ app:
     api_url: https://telraam-api.net
     api_key: yoursecretapikey
     bounding_box:
-      min_lon: ${TELRAAM_BBOX_MIN_LON:10.670709}
-      min_lat: ${TELRAAM_BBOX_MIN_LAT:52.365772}
-      max_lon: ${TELRAAM_BBOX_MAX_LON:10.884599}
-      max_lat: ${TELRAAM_BBOX_MAX_LAT:52.476114}
+      min_lon: 10.670709
+      min_lat: 52.365772
+      max_lon: 10.884599
+      max_lat: 52.476114
 
     # for the time being, this is a static mapping of segments to counting spots in DAVe
     segment_mapping:

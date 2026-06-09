@@ -59,13 +59,11 @@ spec:
             {{- end }}
             {{- if .Values.app.auth.enabled }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_ID
-              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_id | quote }}
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_id }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_SECRET
-              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret | quote }}
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE_TOKEN_URI
-              value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri | quote }}
-            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_AUTHORIZATION_GRANT_TYPE
-              value: client_credentials
+              value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri }}
             - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_SCOPE
               value: openid
             {{- end }}
