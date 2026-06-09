@@ -103,6 +103,8 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
 
     - name: Get tag name
       run: |
@@ -111,6 +113,10 @@ jobs:
         echo "$( git describe --abbrev=0 )"
         echo ${{ env.TAG }}
         echo "****************** getting last tag ************************"
+
+    - name: Checkout tag
+      run: |
+        git checkout ${{ env.TAG }}
 
     - name: Set up JDK 25
       uses: actions/setup-java@v5
