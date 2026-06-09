@@ -33,40 +33,38 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: APP_TELRAAM_API_KEY
-              value: {{ .Values.app.telraam.api_key }}
-            - name: APP_TELRAAM_API_URL
-              value: {{ .Values.app.telraam.api_url }}
+            - name: TELRAAM_API_KEY
+              value: {{ .Values.app.telraam.api_key | quote }}
+            - name: TELRAAM_API_URL
+              value: {{ .Values.app.telraam.api_url | quote }}
             {{- with .Values.app.telraam.bounding_box }}
-            - name: APP_TELRAAM_BOUNDING_BOX_MIN_LON
-              value: {{ .min_lon }}
-            - name: APP_TELRAAM_BOUNDING_BOX_MIN_LAT
-              value: {{ .min_lat }}
-            - name: APP_TELRAAM_BOUNDING_BOX_MAX_LON
-              value: {{ .max_lon }}
-            - name: APP_TELRAAM_BOUNDING_BOX_MAX_LAT
-              value: {{ .max_lat }}
+            - name: TELRAAM_BBOX_MIN_LON
+              value: {{ .min_lon | quote }}
+            - name: TELRAAM_BBOX_MIN_LAT
+              value: {{ .min_lat | quote }}
+            - name: TELRAAM_BBOX_MAX_LON
+              value: {{ .max_lon | quote }}
+            - name: TELRAAM_BBOX_MAX_LAT
+              value: {{ .max_lat | quote }}
             {{- end }}
             {{- with .Values.app.telraam.segment_mapping }}
-            - name: APP_TELRAAM_SEGMENT_MAPPING
-              value: {{ toJson . | quote }}
             {{- range $i, $entry := . }}
-            - name: APP_TELRAAM_SEGMENT_MAPPING_{{$i}}_SEGMENT_ID
-              value: {{ index $entry "segment_id" | quote }}
-            - name: APP_TELRAAM_SEGMENT_MAPPING_{{$i}}_ZAEHLUNG_ID
-              value: {{ index $entry "zaehlung_id" | quote }}
+            - name: TELRAAM_SEGMENT_MAPPING_{{ $i }}_SEGMENT_ID
+              value: {{ $entry.segment_id | quote }}
+            - name: TELRAAM_SEGMENT_MAPPING_{{ $i }}_ZAEHLUNG_ID
+              value: {{ $entry.zaehlung_id | quote }}
             {{- end }}
             {{- end }}
             {{- if .Values.app.auth.enabled }}
-            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVECLIENT_CLIENT_ID
-              value: {{ .Values.spring.security.oauth2.client.registration.daveclient.client_id }}
-            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVECLIENT_CLIENT_SECRET
-              value: {{ .Values.spring.security.oauth2.client.registration.daveclient.client_secret }}
-            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVEPROVIDER_TOKEN_URI
-              value: {{ .Values.spring.security.oauth2.client.provider.daveprovider.token_uri }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_ID
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_id | quote }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_DAVE_CLIENT_SECRET
+              value: {{ .Values.spring.security.oauth2.client.registration.dave.client_secret | quote }}
+            - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_DAVE.TOKEN_URI
+              value: {{ .Values.spring.security.oauth2.client.provider.dave.token_uri | quote }}
             {{- end }}
-            - name: APP_DAVE_URL
-              value: {{ .Values.app.dave_url }}
+            - name: DAVE_API_URL
+              value: {{ .Values.app.dave_url | quote }}
             {{- with .Values.extraEnv }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}

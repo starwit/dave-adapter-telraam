@@ -11,11 +11,11 @@ spring:
     oauth2:
       client:
         registration:
-          daveclient:
+          dave:
             client_id: dave_api
-            client_secret: supersecret
+            client_secret: secret
         provider:
-          daveprovider:
+          dave:
             token_uri: https://uri
 
 
@@ -31,15 +31,15 @@ app:
 
     # for the time being, this is a static mapping of segments to counting spots in DAVe
     segment_mapping:
-      - segment_id: 9000011165
-        zaehlung_id: f6e155f4-89e9-4046-830a-ead29fa6d7a5
-      - segment_id: 9000011164
-        zaehlung_id: f6e155f4-89e9-4046-830a-ead29fa6d7a5
+      - segment_id: "9000011165"
+        zaehlung_id: "287bb410-b00f-4816-a0f3-bb14c18ec0c4"
+      - segment_id: "9000011362"
+        zaehlung_id: "12e594b3-73d4-462e-9395-abaef59e7a89"
 
   scheduler:
     cron: 0 */15 * * * *
 
-  dave_url: http://localhost:8080/detector/save-latest-detections
+  dave_url: http://192.168.100.79:8080/detector/save-latest-detections
   auth: 
     enabled: true
 
