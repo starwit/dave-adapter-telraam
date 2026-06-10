@@ -75,7 +75,7 @@ jobs:
     - name: Get tag name
       run: |
         echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
-        run: echo "tag=$(git describe --abbrev=0)" >> $GITHUB_OUTPUT
+        echo "tag=$(git describe --abbrev=0)" >> $GITHUB_OUTPUT
 
     - name: Create github release
       run: gh release create ${{ env.TAG }} -F CHANGELOG.md
