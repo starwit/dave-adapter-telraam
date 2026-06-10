@@ -75,6 +75,7 @@ jobs:
          MAVEN_GPG_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
 
     - name: Get tag name
+      id: get_tag
       run: |
         echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
         echo "tag=$(git describe --abbrev=0)" >> $GITHUB_OUTPUT
