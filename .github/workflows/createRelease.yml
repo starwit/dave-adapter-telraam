@@ -22,6 +22,8 @@ jobs:
   build:
     name: "Creating maven and github release"
     runs-on: [self-hosted, linux, X64]
+    outputs:
+      release_tag: ${{ steps.get_tag.outputs.tag }}
     
     steps:
     - name: Install GH CLI
