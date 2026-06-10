@@ -75,6 +75,7 @@ jobs:
     - name: Get tag name
       run: |
         echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
+        run: echo "tag=$(git describe --abbrev=0)" >> $GITHUB_OUTPUT
 
     - name: Create github release
       run: gh release create ${{ env.TAG }} -F CHANGELOG.md
@@ -109,8 +110,7 @@ jobs:
     - name: Get tag name
       run: |
         echo "****************** getting last tag ************************"
-        echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
-        echo "$( git describe --abbrev=0 )"
+        echo "TAG=${{ needs.build.outputs.release_tag }}" >> $GITHUB_ENV
         echo ${{ env.TAG }}
         echo "****************** getting last tag ************************"
 
@@ -168,8 +168,7 @@ jobs:
     - name: Get tag name
       run: |
         echo "****************** getting last tag ************************"
-        echo "TAG=$( git describe --abbrev=0 )" >> $GITHUB_ENV
-        echo "$( git describe --abbrev=0 )"
+        echo "TAG=${{ needs.build.outputs.release_tag }}" >> $GITHUB_ENV
         echo ${{ env.TAG }}
         echo "****************** getting last tag ************************"
 
